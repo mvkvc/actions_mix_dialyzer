@@ -13,13 +13,18 @@ inputs:
     description: Elixir version to use
     required: true
     type: string
+  args:
+    description: Arguments to pass to `mix dialyzer`
+    required: false
+    type: string
+    default: ''
   path_plt:
-    description: Path to the PLT files
+    description: Path to the PLT files relative to the Mix project
     required: false
     type: string
     default: dialyzer
   path_hash:
-    description: Path to the hash file
+    description: Path to the hash file relative to the Mix project
     required: false
     type: string
     default: dialyzer/.plt_sha1
@@ -32,24 +37,33 @@ inputs:
 runs:
   using: composite
   steps:
-  - name: Concat path and path_hash
-    run: echo "${{ inputs.path }}/${{ inputs.path_hash }}"
-    shell: bash
-  - uses: actions/cache/restore@v3
+  - name: Restore cache
+    uses: actions/cache/restore@v3
     id: cache-restore-dialyzer
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(inputs.path/inputs.path_hash) }}
       restore-keys: |
         ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
-  - run: mix dialyzer
+  - name: Get current value of the PLT hash file
+    id: current_hash
+    run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
+    shell: bash
+  - name: Run mix dialyzer to type check the code
+    run: mix dialyzer ${{ inputs.args }}
     working-directory: ${{ inputs.path }}
     shell: bash
-  - run: '[ -e "${{ inputs.path_plt }}/*.plt" ] && sha1sum ${{ inputs.path_plt }}/*.plt > ${{ inputs.path_hash }} || mkdir -p ${{ inputs.path_plt }} && touch ${{ inputs.path_hash }}'
+  # After this point steps need if: success() || failure() to continue on mix dialyzer failure
+  - run: '[ -e "${{ inputs.path_plt }}/*.plt" ] && sha1sum ${{ inputs.path_plt }}/*.plt > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}'
     working-directory: ${{ inputs.path }}
     shell: bash
-    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+    if: success() || failure()
+  - name: Get new value of the PLT hash file
+    id: new_hash
+    run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
+    shell: bash
+    if: success() || failure()
   - uses: stefanzweifel/git-auto-commit-action@v4
     with:
       file_pattern: '**/${{ inputs.path_hash }}'
@@ -58,11 +72,11 @@ runs:
       commit_user_email: 'github-actions[bot]@users.noreply.github.com'
       commit_options: '--no-verify'
       commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
-    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+    if: success() || failure()
   - uses: actions/cache/save@v3
     id: cache-save-dialyzer
     with:
       path: |
-        ${{ inputs.path }}/${{ inputs.path_plt}}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout) }}
-    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+        ${{ inputs.path }}/${{ inputs.path_plt }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(inputs.path/inputs.path_hash) }}
+    if: success() || failure()
