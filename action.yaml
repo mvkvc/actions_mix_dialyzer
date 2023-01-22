@@ -32,12 +32,14 @@ inputs:
 runs:
   using: composite
   steps:
+  - name: Concat path and path_hash
+    run: echo "${{ inputs.path }}/${{ inputs.path_hash }}"
   - uses: actions/cache/restore@v3
     id: cache-restore-dialyzer
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(join([inputs.path, inputs.path_hash], '/')) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout)) }}
       restore-keys: |
         ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
   - run: mix dialyzer
