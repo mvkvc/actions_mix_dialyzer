@@ -34,12 +34,13 @@ runs:
   steps:
   - name: Concat path and path_hash
     run: echo "${{ inputs.path }}/${{ inputs.path_hash }}"
+    shell: bash
   - uses: actions/cache/restore@v3
     id: cache-restore-dialyzer
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout)) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout) }}
       restore-keys: |
         ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
   - run: mix dialyzer
@@ -63,5 +64,5 @@ runs:
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt}}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout)) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout) }}
     if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
