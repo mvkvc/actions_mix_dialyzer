@@ -49,7 +49,7 @@ runs:
   - run: '[ -e "${{ inputs.path_plt }}/*.plt" ] && sha1sum ${{ inputs.path_plt }}/*.plt > ${{ inputs.path_hash }} || mkdir -p ${{ inputs.path_plt }} && touch ${{ inputs.path_hash }}'
     working-directory: ${{ inputs.path }}
     shell: bash
-    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+    if: success() || failure()
   - uses: stefanzweifel/git-auto-commit-action@v4
     with:
       file_pattern: '**/${{ inputs.path_hash }}'
@@ -58,11 +58,11 @@ runs:
       commit_user_email: 'github-actions[bot]@users.noreply.github.com'
       commit_options: '--no-verify'
       commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
-    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+    if: success() || failure()
   - uses: actions/cache/save@v3
     id: cache-save-dialyzer
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt}}
       key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout) }}
-    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+    if: success() || failure()
