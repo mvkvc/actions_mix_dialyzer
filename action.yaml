@@ -1,0 +1,62 @@
+name: mix_dialyzer
+description: Run Dialyzer and optionally cache the PLT file
+
+inputs:
+  erlang-version:
+    description: Erlang version to use
+    required: true
+    type: string
+  elixir-version:
+    description: Elixir version to use
+    required: true
+    type: string
+  path_plt:
+    description: Path to the PLT files
+    required: false
+    type: string
+    default: dialyzer
+  path_hash:
+    description: Path to the hash file
+    required: false
+    type: string
+    default: dialyzer/.plt_sha1
+  path:
+    description: Path to the Mix project
+    required: false
+    type: string
+    default: .
+
+runs:
+  using: composite
+  steps:
+  - uses: actions/cache/restore@v3
+    id: cache-restore-dialyzer
+    with:
+      path: |
+        ${{ inputs.path }}/${{ inputs.path_plt }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(inputs.path/inputs.path_hash) }}
+      restore-keys: |
+        ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
+  - run: mix dialyzer
+    working-directory: ${{ inputs.path }}
+    shell: bash
+  - run: '[ -e "${{ inputs.path_plt }}/*.plt" ] && sha1sum ${{ inputs.path_plt }}/*.plt > ${{ inputs.path_hash }} || mkdir -p ${{ inputs.path_plt }} && touch ${{ inputs.path_hash }}'
+    working-directory: ${{ inputs.path }}
+    shell: bash
+    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+  - uses: stefanzweifel/git-auto-commit-action@v4
+    with:
+      file_pattern: '**/${{ inputs.path_hash }}'
+      commit_message: 'github-actions[bot]: update ${{ inputs.path_hash }}'
+      commit_user_name: 'github-actions[bot]'
+      commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+      commit_options: '--no-verify'
+      commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
+    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
+  - uses: actions/cache/save@v3
+    id: cache-save-dialyzer
+    with:
+      path: |
+        ${{ inputs.path }}/${{ inputs.path_plt}}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles('**/dialyzer/.plt_sha1') }}
+    if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
