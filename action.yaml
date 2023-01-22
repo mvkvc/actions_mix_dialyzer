@@ -63,5 +63,5 @@ runs:
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt}}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(inputs.path/inputs.path_hash) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.concat_path_and_path_hash.outputs.stdout)) }}
     if: (success() || failure()) && steps.cache-restore-dialyzer.outputs.cache-hit != 'true'
