@@ -37,7 +37,7 @@ runs:
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(inputs.path + '/' + inputs.path_hash) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(join([inputs.path, inputs.path_hash], '/')) }}
       restore-keys: |
         ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
   - run: mix dialyzer
