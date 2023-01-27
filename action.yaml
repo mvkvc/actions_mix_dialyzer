@@ -35,11 +35,13 @@ inputs:
     default: .
 
 runs:
+  permissions:
+    contents: write
   using: composite
   steps:
     - name: Get current value of the PLT hash file
       id: current_hash
-      run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
+      run: echo $(cat ${{ inputs.path }}/${{ inputs.path_hash }})
       shell: bash
     - name: Restore cache
       uses: actions/cache/restore@v3
@@ -56,13 +58,13 @@ runs:
       shell: bash
     # After this point steps need if: success() || failure() to continue on mix dialyzer failure
     - name: Generate hash file
-      run: find dialyzer -wholename "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} && echo "Writing to hash file" || touch ${{ inputs.path_hash }} && echo "No PLT files found, writing empty hash file"
+      run: (find dialyzer -wholename "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} && echo "Writing to hash file") || (touch ${{ inputs.path_hash }} && echo "No PLT files found, writing empty hash file")
       working-directory: ${{ inputs.path }}
       shell: bash
       if: success() || failure()
     - name: Get new value of the PLT hash file
       id: new_hash
-      run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
+      run: echo $(cat ${{ inputs.path }}/${{ inputs.path_hash }})
       shell: bash
       if: success() || failure()
     - uses: stefanzweifel/git-auto-commit-action@v4
