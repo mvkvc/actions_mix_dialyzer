@@ -37,9 +37,9 @@ inputs:
 runs:
   using: composite
   steps:
-  - name: Concat path to pass to hashFiles
-    id: plt_glob
-    run: echo "${{ inputs.path }}/${{ inputs.path_plt }}/*.plt"
+  - name: Get current value of the PLT hash file
+    id: current_hash
+    run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
     shell: bash
   - name: Restore cache
     uses: actions/cache/restore@v3
@@ -47,19 +47,16 @@ runs:
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.plt_glob.outputs.stdout) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.current_hash.outputs.stdout) }}
       restore-keys: |
         ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
-  - name: Get current value of the PLT hash file
-    id: current_hash
-    run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
-    shell: bash
   - name: Run mix dialyzer to type check the code
     run: mix dialyzer ${{ inputs.args }}
     working-directory: ${{ inputs.path }}
     shell: bash
   # After this point steps need if: success() || failure() to continue on mix dialyzer failure
-  - run: find dialyzer -name "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}
+  - name: Generate hash file
+    run: find dialyzer -name "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}
     working-directory: ${{ inputs.path_hash }}
     shell: bash
     if: success() || failure()
@@ -82,5 +79,5 @@ runs:
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.plt_glob.outputs.stdout) }}
-    if: steps.new_hash.outputs.stdout != steps.current_hash.outputs.stdout
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.new_hash.outputs.stdout) }}
+    if: success() || failure()
