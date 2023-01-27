@@ -34,8 +34,6 @@ inputs:
     type: string
     default: .
 
-
-
 runs:
   using: composite
   steps:
