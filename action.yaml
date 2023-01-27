@@ -57,7 +57,7 @@ runs:
   # After this point steps need if: success() || failure() to continue on mix dialyzer failure
   - name: Generate hash file
     run: find dialyzer -name "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}
-    working-directory: ${{ inputs.path_hash }}
+    working-directory: ${{ inputs.path }}
     shell: bash
     if: success() || failure()
   - name: Get new value of the PLT hash file
