@@ -67,13 +67,13 @@ runs:
       if: success() || failure()
     - uses: stefanzweifel/git-auto-commit-action@v4
       with:
+        repository: ${{ inputs.path }}
         file_pattern: ${{ inputs.path_hash }}
         commit_message: "github-actions[bot]: update ${{ inputs.path_hash }}"
         commit_user_name: "github-actions[bot]"
         commit_user_email: "github-actions[bot]@users.noreply.github.com"
         commit_options: "--no-verify"
         commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-      working-directory: ${{ inputs.path }}
       if: success() || failure()
     - uses: actions/cache/save@v3
       id: cache-save-dialyzer
