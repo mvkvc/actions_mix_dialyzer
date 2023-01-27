@@ -37,13 +37,17 @@ inputs:
 runs:
   using: composite
   steps:
+  - name: Concat path and hash file path
+    id: concat_path
+    run: echo "${{ inputs.path }}/${{ inputs.path_hash }}"
+    shell: bash
   - name: Restore cache
     uses: actions/cache/restore@v3
     id: cache-restore-dialyzer
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(inputs.path/inputs.path_hash) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(concat_path) }}
       restore-keys: |
         ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
   - name: Get current value of the PLT hash file
@@ -78,5 +82,5 @@ runs:
     with:
       path: |
         ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(inputs.path/inputs.path_hash) }}
+      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(concat_path) }}
     if: success() || failure()
