@@ -59,8 +59,8 @@ runs:
     working-directory: ${{ inputs.path }}
     shell: bash
   # After this point steps need if: success() || failure() to continue on mix dialyzer failure
-  - run: '[ -e "${{ inputs.path_plt }}/*.plt" ] && sha1sum ${{ inputs.path_plt }}/*.plt > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}'
-    working-directory: ${{ inputs.path }}
+  - run: find dialyzer -name "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}
+    working-directory: ${{ inputs.path_hash }}
     shell: bash
     if: success() || failure()
   - name: Get new value of the PLT hash file
