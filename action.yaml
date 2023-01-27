@@ -1,8 +1,8 @@
 name: mix_dialyzer
 description: Run `mix dialyzer` and cache the `.plt` files.
 branding:
-  icon: 'arrow-down'
-  color: 'purple'
+  icon: "arrow-down"
+  color: "purple"
 
 inputs:
   erlang-version:
@@ -17,7 +17,7 @@ inputs:
     description: Arguments to pass to `mix dialyzer`
     required: false
     type: string
-    default: ''
+    default: ""
   path_plt:
     description: Path to the PLT files relative to the Mix project
     required: false
@@ -37,47 +37,47 @@ inputs:
 runs:
   using: composite
   steps:
-  - name: Get current value of the PLT hash file
-    id: current_hash
-    run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
-    shell: bash
-  - name: Restore cache
-    uses: actions/cache/restore@v3
-    id: cache-restore-dialyzer
-    with:
-      path: |
-        ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.current_hash.outputs.stdout) }}
-      restore-keys: |
-        ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
-  - name: Run mix dialyzer to type check the code
-    run: mix dialyzer ${{ inputs.args }}
-    working-directory: ${{ inputs.path }}
-    shell: bash
-  # After this point steps need if: success() || failure() to continue on mix dialyzer failure
-  - name: Generate hash file
-    run: find dialyzer -name "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}
-    working-directory: ${{ inputs.path }}
-    shell: bash
-    if: success() || failure()
-  - name: Get new value of the PLT hash file
-    id: new_hash
-    run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
-    shell: bash
-    if: success() || failure()
-  - uses: stefanzweifel/git-auto-commit-action@v4
-    with:
-      file_pattern: '**/${{ inputs.path_hash }}'
-      commit_message: 'github-actions[bot]: update ${{ inputs.path_hash }}'
-      commit_user_name: 'github-actions[bot]'
-      commit_user_email: 'github-actions[bot]@users.noreply.github.com'
-      commit_options: '--no-verify'
-      commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
-    if: success() || failure()
-  - uses: actions/cache/save@v3
-    id: cache-save-dialyzer
-    with:
-      path: |
-        ${{ inputs.path }}/${{ inputs.path_plt }}
-      key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.new_hash.outputs.stdout) }}
-    if: success() || failure()
+    - name: Get current value of the PLT hash file
+      id: current_hash
+      run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
+      shell: bash
+    - name: Restore cache
+      uses: actions/cache/restore@v3
+      id: cache-restore-dialyzer
+      with:
+        path: |
+          ${{ inputs.path }}/${{ inputs.path_plt }}
+        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.current_hash.outputs.stdout) }}
+        restore-keys: |
+          ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
+    - name: Run mix dialyzer to type check the code
+      run: mix dialyzer ${{ inputs.args }}
+      working-directory: ${{ inputs.path }}
+      shell: bash
+    # After this point steps need if: success() || failure() to continue on mix dialyzer failure
+    - name: Generate hash file
+      run: find dialyzer -wholename "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} || touch ${{ inputs.path_hash }}
+      working-directory: ${{ inputs.path }}
+      shell: bash
+      if: success() || failure()
+    - name: Get new value of the PLT hash file
+      id: new_hash
+      run: cat ${{ inputs.path }}/${{ inputs.path_hash }}
+      shell: bash
+      if: success() || failure()
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        file_pattern: "**/${{ inputs.path_hash }}"
+        commit_message: "github-actions[bot]: update ${{ inputs.path_hash }}"
+        commit_user_name: "github-actions[bot]"
+        commit_user_email: "github-actions[bot]@users.noreply.github.com"
+        commit_options: "--no-verify"
+        commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+      if: success() || failure()
+    - uses: actions/cache/save@v3
+      id: cache-save-dialyzer
+      with:
+        path: |
+          ${{ inputs.path }}/${{ inputs.path_plt }}
+        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.new_hash.outputs.stdout) }}
+      if: success() || failure()
