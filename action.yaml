@@ -47,7 +47,7 @@ runs:
       with:
         path: |
           ${{ inputs.path }}/${{ inputs.path_plt }}
-        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.current_hash.outputs.stdout) }}
+        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-$(steps.current_hash.outputs.stdout | sha1sum)
         restore-keys: |
           ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
     - name: Run mix dialyzer to type check the code
@@ -80,5 +80,5 @@ runs:
       with:
         path: |
           ${{ inputs.path }}/${{ inputs.path_plt }}
-        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.new_hash.outputs.stdout) }}
+        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-$(steps.new_hash.outputs.stdout | sha1sum)
       if: success() || failure()
