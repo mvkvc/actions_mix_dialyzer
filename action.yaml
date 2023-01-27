@@ -39,7 +39,7 @@ runs:
   steps:
     - name: Get current value of the PLT hash file
       id: current_hash
-      run: echo $(cat ${{ inputs.path }}/${{ inputs.path_hash }})
+      run: echo "CURRENT_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }}) | sha1sum" >> $GITHUB_OUTPUT
       shell: bash
     - name: Restore cache
       uses: actions/cache/restore@v3
@@ -47,7 +47,7 @@ runs:
       with:
         path: |
           ${{ inputs.path }}/${{ inputs.path_plt }}
-        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-$(steps.current_hash.outputs.stdout | sha1sum)
+        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ steps.current_hash.outputs.CURRENT_HASH }}
         restore-keys: |
           ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
     - name: Run mix dialyzer to type check the code
@@ -62,7 +62,7 @@ runs:
       if: success() || failure()
     - name: Get new value of the PLT hash file
       id: new_hash
-      run: echo $(cat ${{ inputs.path }}/${{ inputs.path_hash }})
+      run: echo "NEW_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }}) | sha1sum" >> $GITHUB_OUTPUT
       shell: bash
       if: success() || failure()
     - uses: stefanzweifel/git-auto-commit-action@v4
@@ -80,5 +80,5 @@ runs:
       with:
         path: |
           ${{ inputs.path }}/${{ inputs.path_plt }}
-        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-$(steps.new_hash.outputs.stdout | sha1sum)
+        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ steps.new_hash.outputs.NEW_HASH }}
       if: success() || failure()
