@@ -39,7 +39,7 @@ runs:
   steps:
     - name: Get current value of the PLT hash file
       id: current_hash
-      run: echo "CURRENT_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }} | sha1sum)" >> $GITHUB_OUTPUT
+      run: echo "CURRENT_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }} | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
       shell: bash
     - name: Restore cache
       uses: actions/cache/restore@v3
@@ -62,7 +62,7 @@ runs:
       if: success() || failure()
     - name: Get new value of the PLT hash file
       id: new_hash
-      run: echo "NEW_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }} | sha1sum)" >> $GITHUB_OUTPUT
+      run: echo "NEW_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }} | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
       shell: bash
       if: success() || failure()
     - uses: stefanzweifel/git-auto-commit-action@v4
