@@ -7,11 +7,19 @@ This action runs `mix dialyzer` and caches the PLT files for faster subsequent r
 To include this action in your workflow, add the following line:
 
 ```yaml
-- uses: actions_mix_dialyzer@v1.0.14-alpha
-  with:
-    - erlang-version:
-    - elixir-version:
+jobs:
+  ...
     ...
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+    ...
+    - uses: actions_mix_dialyzer@v1.0.22-alpha
+      with:
+        - erlang-version:
+        - elixir-version:
+        ...
 ```
 
 The full list of inputs are:
