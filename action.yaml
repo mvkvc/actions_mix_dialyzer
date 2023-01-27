@@ -86,4 +86,3 @@ runs:
         ${{ inputs.path }}/${{ inputs.path_plt }}
       key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles(steps.plt_glob.outputs.stdout) }}
     if: steps.new_hash.outputs.stdout != steps.current_hash.outputs.stdout
-
