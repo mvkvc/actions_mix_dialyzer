@@ -1,5 +1,5 @@
 name: mix_dialyzer
-description: Run `mix dialyzer` and cache the `.plt` files.
+description: Runs `mix dialyzer` and caches the the folder containing your PLT files.
 branding:
   icon: "arrow-down"
   color: "purple"
@@ -13,72 +13,34 @@ inputs:
     description: Elixir version to use
     required: true
     type: string
-  args:
-    description: Arguments to pass to `mix dialyzer`
-    required: false
-    type: string
-    default: ""
-  path_plt:
-    description: Path to the PLT files relative to the Mix project
+  path_dialyzer:
+    description: Path to the folder containing your PLT files relative to the Mix project root.
     required: false
     type: string
     default: dialyzer
-  path_hash:
-    description: Path to the hash file relative to the Mix project
-    required: false
-    type: string
-    default: dialyzer/.plt_sha1
   path:
-    description: Path to the Mix project
+    description: Path to the root of your Mix project.
     required: false
     type: string
     default: .
+  args:
+    description: Arguments to pass to `mix dialyzer`.
+    required: false
+    type: string
+    default: ""
 
 runs:
   using: composite
   steps:
-    - name: Get current value of the PLT hash file
-      id: current_hash
-      run: echo "CURRENT_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }} | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
-      shell: bash
-    - name: Restore cache
-      uses: actions/cache/restore@v3
-      id: cache-restore-dialyzer
+    - name: Cache
+      uses: actions/cache@v3
       with:
         path: |
-          ${{ inputs.path }}/${{ inputs.path_plt }}
-        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ steps.current_hash.outputs.CURRENT_HASH }}
+          ${{ inputs.path }}/${{ inputs.path_dialyzer }}
+        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ hashFiles('**/mix.lock') }}
         restore-keys: |
           ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-
-    - name: Run mix dialyzer to type check the code
+    - name: Dialyzer
       run: mix dialyzer ${{ inputs.args }}
       working-directory: ${{ inputs.path }}
       shell: bash
-    # After this point steps need if: success() || failure() to continue on mix dialyzer failure
-    - name: Generate hash file
-      run: (find dialyzer -wholename "${{ inputs.path_plt }}/*.plt" -exec sha1sum {} \; > ${{ inputs.path_hash }} && echo "Writing to hash file") || (touch ${{ inputs.path_hash }} && echo "No PLT files found, writing empty hash file")
-      working-directory: ${{ inputs.path }}
-      shell: bash
-      if: success() || failure()
-    - name: Get new value of the PLT hash file
-      id: new_hash
-      run: echo "NEW_HASH=$(cat ${{ inputs.path }}/${{ inputs.path_hash }} | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
-      shell: bash
-      if: success() || failure()
-    - uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        repository: ${{ inputs.path }}
-        file_pattern: ${{ inputs.path_hash }}
-        commit_message: "github-actions[bot]: update ${{ inputs.path_hash }}"
-        commit_user_name: "github-actions[bot]"
-        commit_user_email: "github-actions[bot]@users.noreply.github.com"
-        commit_options: "--no-verify"
-        commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-      if: success() || failure()
-    - uses: actions/cache/save@v3
-      id: cache-save-dialyzer
-      with:
-        path: |
-          ${{ inputs.path }}/${{ inputs.path_plt }}
-        key: ${{ runner.os }}-erlang-${{ inputs.erlang-version }}-elixir-${{ inputs.elixir-version }}-dialyzer-${{ steps.new_hash.outputs.NEW_HASH }}
-      if: success() || failure()

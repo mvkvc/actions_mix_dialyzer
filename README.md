@@ -1,21 +1,18 @@
 # actions_mix_dialyzer
 
-This action runs `mix dialyzer` and caches the PLT files for faster subsequent runs.
+This action runs `mix dialyzer` and caches the the folder containing your PLT files.
 
 ## Usage
 
-To include this action in your workflow, add the following line:
+To include this action in your workflow, add the following lines:
 
 ```yaml
 jobs:
   ...
     ...
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
     ...
-    - uses: actions_mix_dialyzer@v1.0.22-alpha
+    - uses: actions_mix_dialyzer@v1.0.23-alpha
       with:
         - erlang-version:
         - elixir-version:
@@ -34,24 +31,19 @@ inputs:
     description: Elixir version to use
     required: true
     type: string
-  args:
-    description: Arguments to pass to `mix dialyzer`
-    required: false
-    type: string
-    default: ''
-  path_plt:
-    description: Path to the PLT files relative to the Mix project
+  path_dialyzer:
+    description: Path to the folder containing your PLT files relative to the Mix project root.
     required: false
     type: string
     default: dialyzer
-  path_hash:
-    description: Path to the hash file relative to the Mix project
-    required: false
-    type: string
-    default: dialyzer/.plt_sha1
   path:
-    description: Path to the Mix project
+    description: Path to the root of your Mix project.
     required: false
     type: string
     default: .
+  args:
+    description: Arguments to pass to `mix dialyzer`.
+    required: false
+    type: string
+    default: ""
 ```
